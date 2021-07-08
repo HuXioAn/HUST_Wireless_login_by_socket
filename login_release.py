@@ -23,6 +23,7 @@ login_str_content_tail='&operatorPwd=&operatorUserId=&validcode=&passwordEncrypt
 
 
 def info_request(redirect_host,redirect_port,redirect_request_str):
+    #在重定向处获取queryString
     print('[*]requesting redirection : \r\n')
     flag=0
     while(1):
