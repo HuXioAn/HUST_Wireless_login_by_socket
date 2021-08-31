@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include<netinet/in.h>
-
+#include<arpa/inet.h>
 
 int info_request(char*,char*,int,char*);
 int login(char*,int,char*,char*,char*);
@@ -106,9 +106,9 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
         }
         else{
 
-            int end = strstr(response,"\'</script>")+10;
-            response[end]='\0';
-            strcpy(querystr,response+strstr(response,"wlanuserip"));
+            *(strstr(response,"\'</script>")+10)='\0';
+            
+            strcpy(querystr,strstr(response,"wlanuserip"));
             if(strlen(querystr)>10){
                 printf("[*]QueryString is as below:\r\n%s\n",querystr);
                 return 1;
@@ -158,18 +158,18 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
     //最后拼起来
     char login_str[1024]={0},content[1024]={0};
 
-    int place=0;
+    char* place=NULL;
     while(place=strstr(querystr,"=")){
         //临时借用login_str
-        strcpy(login_str,querystr+place+1);
-        strcpy(querystr+place,"%253D");
-        strcpy(querystr+place+5,login_str);
+        strcpy(login_str,place+1);
+        strcpy(place,"%253D");
+        strcpy(place+5,login_str);
     }
     while(place=strstr(querystr,"&")){
         //临时借用login_str
-        strcpy(login_str,querystr+place+1);
-        strcpy(querystr+place,"%2526");
-        strcpy(querystr+place+5,login_str);
+        strcpy(login_str,place+1);
+        strcpy(place,"%2526");
+        strcpy(place+5,login_str);
     }
     //生成content
     sprintf(content,"userId=%s&password=%s&service=&queryString=%s \
