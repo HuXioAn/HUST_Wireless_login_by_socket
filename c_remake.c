@@ -172,8 +172,8 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
         strcpy(place+5,login_str);
     }
     //生成content
-    sprintf(content,"userId=%s&password=%s&service=&queryString=%s \
-            &operatorPwd=&operatorUserId=&validcode=&passwordEncrypt=false"\
+    sprintf(content,"userId=%s&password=%s&service=&queryString=%s"
+            "&operatorPwd=&operatorUserId=&validcode=&passwordEncrypt=false"\
             ,id,pwd,querystr);
 
     //替换header里的长度
@@ -184,7 +184,7 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
         Content-Length: %d\r\nOrigin: http://172.18.18.60:8080\r\nConnection: keep-alive\r\n\r\n%s",\
         strlen(content),content);
 
-    printf("[*]Login request:\n%s",login_str);
+    printf("[*]Login request:\n%s\n",login_str);
 
     printf("[*]Sending request...\n");
         if(send(socket_desc,login_str,strlen(login_str),0)<0){
