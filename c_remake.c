@@ -106,7 +106,7 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
         }
         else{
 
-            *(strstr(response,"\'</script>")+10)='\0';
+            *(strstr(response,"\'</script>"))='\0';
             
             strcpy(querystr,strstr(response,"wlanuserip"));
             if(strlen(querystr)>10){
