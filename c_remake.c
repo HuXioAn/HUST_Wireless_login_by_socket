@@ -177,11 +177,11 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
             ,id,pwd,querystr);
 
     //替换header里的长度
-    sprintf(login_str,"POST /eportal/InterFace.do?method=login HTTP/1.1\r\n \
-        Host: 172.18.18.60:8080\r\nUser-Agent: Python Socket\r\nAccept: */*\r\n \
-        Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n \
-        Accept-Encoding: gzip, deflate\r\nContent-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n \
-        Content-Length: %d\r\nOrigin: http://172.18.18.60:8080\r\nConnection: keep-alive\r\n\r\n%s",\
+    sprintf(login_str,"POST /eportal/InterFace.do?method=login HTTP/1.1\r\n"
+        "Host: 172.18.18.60:8080\r\nUser-Agent: Python Socket\r\nAccept: */*\r\n"
+        "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n"
+        "Accept-Encoding: gzip, deflate\r\nContent-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n"
+        "Content-Length: %d\r\nOrigin: http://172.18.18.60:8080\r\nConnection: keep-alive\r\n\r\n%s",\
         strlen(content),content);
 
     printf("[*]Login request:\n%s\n",login_str);
