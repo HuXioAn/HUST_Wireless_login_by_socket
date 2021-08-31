@@ -113,6 +113,8 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
                 printf("[*]QueryString is as below:\r\n%s\n",querystr);
                 close(socket_desc);
                 return 1;
+            }else{
+                flag++;
             }
         }
 
