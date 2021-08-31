@@ -14,6 +14,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -23,14 +24,15 @@ int info_request(char*,char*,int,char*);
 int login(char*,int,char*,char*,char*);
 
 
+char redirect_request_str[]="GET / HTTP/1.1\r\nHost: 123.123.123.123\r\nUser-Agent: Python Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\nAccept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n"
+char redirect_host[]="123.123.123.123";
+int redirect_port=80;
 
-const char redirect_host[]='123.123.123.123';
-const int redirect_port=80;
-
-const char login_host='172.18.18.60';
+char login_host[]="172.18.18.60";
 int login_port=8080;
 
-
+char id[]="";
+char pwd[]="";
 
 
 int main(){
@@ -58,7 +60,7 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
 //获取querystr
     int flag=0;
     struct sockaddr_in redirect;
-    char response[1024]=0;
+    char response[1024]={0};
 
     //创建socket
     int socket_desc=socket(AF_INET,SOCK_STREAM,0);
@@ -127,7 +129,7 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
     printf("[*]Trying to login\n");
 
     struct sockaddr_in login;
-    char response[1024]=0;
+    char response[1024]={0};
 
     //创建socket
     int socket_desc=socket(AF_INET,SOCK_STREAM,0);
@@ -153,7 +155,7 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
     //连接成功，下面生成请求
     //先把querystr里的等号和与符号变成两次url格式，再根据content的长度修改headers里的长度。
     //最后拼起来
-    char login_str[1024]=0,content[1024]=0,response[1024]=0;
+    char login_str[1024]={0},content[1024]={0},response[1024]={0};
 
     int place=0;
     while(place=strstr(querystr,"=")){
