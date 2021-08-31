@@ -92,7 +92,8 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
 
 
     printf("[*]requesting redirection : \r\n");
-    while(1){
+    while(flag<3){
+        flag++;
         printf("[*]Sending request...\n");
         if(send(socket_desc,redirect_request_str,strlen(redirect_request_str),0)<0){
             printf("[!]Error sending\n");
@@ -106,20 +107,16 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
 
         //处理报文获得querystr
         if(NULL==strstr(response,"wlanuserip")){
-            flag++;
             if(flag==3){printf("[!]Trouble requesting querystr\n");close(socket_desc);return 0;}
         }
         else{
 
             *(strstr(response,"\'</script>"))='\0';
-            
             strcpy(querystr,strstr(response,"wlanuserip"));
             if(strlen(querystr)>10){
                 printf("[*]QueryString is as below:\r\n%s\n",querystr);
                 close(socket_desc);
                 return 1;
-            }else{
-                flag++;
             }
         }
 
