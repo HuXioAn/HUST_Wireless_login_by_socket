@@ -84,6 +84,11 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
         printf("[*]Connected to redirection server successfully\n");
     }
 
+    struct timeval timeout = {3,0}; 
+
+//设置接收超时
+    setsockopt(socket_desc,SOL_SOCKET,SO_RCVTIMEO,(char *)&timeout,sizeof(struct timeval));
+
 
 
     printf("[*]requesting redirection : \r\n");
@@ -94,7 +99,7 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
             continue;
         }
         //接收
-        if(recv(socket_desc,response,1024,0)<0){
+        if(recv(socket_desc,response,1024,0)<=0){
             printf("[!]Error receiving\n");
             continue;
         }
