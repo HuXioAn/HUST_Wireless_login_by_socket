@@ -108,7 +108,7 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
 
             int end = strstr(response,"\'</script>")+10;
             response[end]='\0';
-            strcpy(querystr,response+(strstr(response,"wlanuserip")));
+            strcpy(querystr,response+strstr(response,"wlanuserip"));
             if(strlen(querystr)>10){
                 printf("[*]QueryString is as below:\r\n%s\n",querystr);
                 return 1;
@@ -156,7 +156,7 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
     //连接成功，下面生成请求
     //先把querystr里的等号和与符号变成两次url格式，再根据content的长度修改headers里的长度。
     //最后拼起来
-    char login_str[1024]={0},content[1024]={0},;
+    char login_str[1024]={0},content[1024]={0};
 
     int place=0;
     while(place=strstr(querystr,"=")){
