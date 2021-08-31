@@ -100,7 +100,7 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
         }
 
         //处理报文获得querystr
-        if(strstr(response,"wlanuserip")){
+        if(NULL==strstr(response,"wlanuserip")){
             flag++;
             if(flag==3){printf("[!]Trouble requesting querystr\n");return 0;}
         }
