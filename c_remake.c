@@ -54,7 +54,7 @@ int main(){
     }
 
 
-    exit(1);
+    exit(0);
 }
 
 
