@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include<netinet/in.h>
 #include<arpa/inet.h>
+#include <netinet/tcp.h>
 
 int info_request(char*,char*,int,char*);
 int login(char*,int,char*,char*,char*);
@@ -75,9 +76,12 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
     redirect.sin_family=AF_INET;
     redirect.sin_port=htons(redirect_port);
    //连接
-    
+    //设置连接超时应对已经连接的情况
+    int syncnt = 2;
+    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
+
     if(connect(socket_desc,(struct sockaddr *)&redirect,sizeof(redirect))<0){
-        printf("[!]Error Connecting\n");
+        printf("[!]Error Connecting redirection, chances are that you've already been online.\n");
         return 0;
 
     }else {
@@ -150,6 +154,9 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
     login.sin_port=htons(login_port);
    //连接
     
+    int syncnt = 2;
+    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
+
     if(connect(socket_desc,(struct sockaddr *)&login,sizeof(login))<0){
         printf("[!]Error Connecting\n");
         return 0;
