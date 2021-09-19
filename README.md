@@ -6,3 +6,9 @@
 注释很少哈，非常简短估计也不需要注释了。
 **文章链接：**
 https://blog.csdn.net/qq_28039135/article/details/118573714
+
+**2021/9/6**
+更新Linux下C语言版本登录程序，并为R6300v2编译运行通过可用。在CentOS8下也可用。
+文章链接：
+https://www.cnblogs.com/huxiaoan/p/15235849.html
+C语言版本严谨了一些。。。毕竟要在路由器上一直跑。
