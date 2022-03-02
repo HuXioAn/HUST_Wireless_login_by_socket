@@ -33,11 +33,30 @@ int redirect_port=80;
 char login_host[]="172.18.18.60";
 int login_port=8080;
 
-char id[]="";
-char pwd[]="";
+char id[20]="";
+char pwd[40]="";
 
 
-int main(){
+int main(int argc,char ** argv){
+    //使用getopt解析参数
+    int opt;
+    char * optstr = "u:p:h";//user\pwd\help
+
+    while((opt = getopt(argc,argv,optstr)) != -1){
+        switch (opt)
+        {
+        case 'u':
+            strcpy(id,optarg);
+            break;
+        case 'p':
+            strcpy(pwd,optarg);
+            break;
+        
+        default:
+            break;
+        }
+    }
+
 
     char querystr[1024]={0};
 
