@@ -16,23 +16,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include<netinet/in.h>
 #include<arpa/inet.h>
 #include <netinet/tcp.h>
 
-#define HELP_STR "Usage: -u Youraccount -p Yourpassword"
+#define HELP_STR "[*]Usage: -u Youraccount -p Yourpassword\n\
+[*]Further usage:--redirect_host xx.xx.xx.xx --redirect_port xx --login_host xx.xx.xx.xx --login_port xx\n"
 
 int info_request(char*,char*,int,char*);
 int login(char*,int,char*,char*,char*);
 
 
-char redirect_request_str[]="GET / HTTP/1.1\r\nHost: 123.123.123.123\r\nUser-Agent: Python Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\nAccept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
-char redirect_host[]="123.123.123.123";
+char redirect_request_str[]="GET / HTTP/1.1\r\nHost: 123.123.123.123\r\nUser-Agent: C Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\nAccept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
+
+
+char redirect_host[20]="123.123.123.123";
 int redirect_port=80;
 
-char login_host[]="172.18.18.60";
+char login_host[20]="172.18.18.60";
 int login_port=8080;
 
 char id[20]="";
@@ -43,29 +47,68 @@ int main(int argc,char ** argv){
     //使用getopt解析参数
     int opt;
     char * optstr = "u:p:h";//user\pwd\help
+    int long_option_flag=0;
 
-    while((opt = getopt(argc,argv,optstr)) != -1){
+
+    struct option long_option_list[]={
+        {"login_host",required_argument,&long_option_flag,1},
+        {"login_port",required_argument,&long_option_flag,2},
+        {"redirect_host",required_argument,&long_option_flag,3},
+        {"redirect_port",required_argument,&long_option_flag,4},
+        {"logout",no_argument,&long_option_flag,10}
+    };
+
+    while((opt = getopt_long(argc,argv,optstr,long_option_list,NULL)) != -1){
         switch (opt)
         {
         case 'u':
             strcpy(id,optarg);
-            printf("[*]Using ID: %s\n",id);
+            //printf("[*]Using ID: %s\n",id);
             break;
         case 'p':
             strcpy(pwd,optarg);
-            printf("[*]Using password: %s\n",pwd);
+            //printf("[*]Using password: %s\n",pwd);
             break;
         case 'h':
-            printf("[*]%s\n",HELP_STR);
+            printf("%s\n",HELP_STR);
             exit(0);
             break;
-        
+        case 0://long_optin
+            switch (long_option_flag)
+            {
+            case 1:
+                strcpy(login_host,optarg);
+                break;
+            case 2:
+                login_port=atoi(optarg);
+                break;
+            case 3:
+                strcpy(redirect_host,optarg);
+                break;
+            case 4:
+                redirect_port=atoi(optarg);
+                break;
+            case 10:
+                //TODO:LOGOUT
+            default:
+                printf("[!]Unsupported argument, '-h' may help you\n");
+                exit(-1);
+                break;
+            }
+        break;
         default:
             printf("[!]Unsupported argument, '-h' may help you\n");
             exit(-1);
             break;
         }
     }
+
+
+
+    //general description output
+    printf("[*]Going to login with:\n    Host:%s:%d\n    Redirect:%s:%d\n    ID:%s\n",\
+    login_host,login_port,redirect_host,redirect_port,id);
+
 
 
     char querystr[1024]={0};
@@ -219,7 +262,7 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
 
     //替换header里的长度
     sprintf(login_str,"POST /eportal/InterFace.do?method=login HTTP/1.1\r\n"
-        "Host: 172.18.18.60:8080\r\nUser-Agent: Python Socket\r\nAccept: */*\r\n"
+        "Host: 172.18.18.60:8080\r\nUser-Agent: C Socket\r\nAccept: */*\r\n"
         "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n"
         "Accept-Encoding: gzip, deflate\r\nContent-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n"
         "Content-Length: %d\r\nOrigin: http://172.18.18.60:8080\r\nConnection: keep-alive\r\n\r\n%s",\
