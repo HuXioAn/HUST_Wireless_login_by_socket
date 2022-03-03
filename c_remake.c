@@ -30,9 +30,6 @@ int info_request(char*,char*,int,char*);
 int login(char*,int,char*,char*,char*);
 
 
-char redirect_request_str[]="GET / HTTP/1.1\r\nHost: 123.123.123.123\r\nUser-Agent: C Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\nAccept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
-
-
 char redirect_host[20]="123.123.123.123";
 int redirect_port=80;
 
@@ -57,7 +54,7 @@ int main(int argc,char ** argv){
         {"redirect_port",required_argument,&long_option_flag,4},
         {"logout",no_argument,&long_option_flag,10}
     };
-
+    //参数解析
     while((opt = getopt_long(argc,argv,optstr,long_option_list,NULL)) != -1){
         switch (opt)
         {
@@ -112,6 +109,12 @@ int main(int argc,char ** argv){
 
 
     char querystr[1024]={0};
+    char redirect_request_str[1024]={0};
+
+    sprintf(redirect_request_str,"GET / HTTP/1.1\r\nHost: %s:%d\r\n\
+    User-Agent: C Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n\
+    Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\n\
+    Connection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n",redirect_host,redirect_port);
 
     if(info_request(querystr,redirect_host,redirect_port,redirect_request_str));
     else {
@@ -262,11 +265,11 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
 
     //替换header里的长度
     sprintf(login_str,"POST /eportal/InterFace.do?method=login HTTP/1.1\r\n"
-        "Host: 172.18.18.60:8080\r\nUser-Agent: C Socket\r\nAccept: */*\r\n"
+        "Host: %s:%d\r\nUser-Agent: C Socket\r\nAccept: */*\r\n"
         "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n"
         "Accept-Encoding: gzip, deflate\r\nContent-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n"
-        "Content-Length: %d\r\nOrigin: http://172.18.18.60:8080\r\nConnection: keep-alive\r\n\r\n%s",\
-        strlen(content),content);
+        "Content-Length: %d\r\nOrigin: http://%s:%d\r\nConnection: keep-alive\r\n\r\n%s",\
+        login_host,login_port,strlen(content),login_host,login_port,content);
 
     printf("[*]Login request:\n%s\n",login_str);
 
