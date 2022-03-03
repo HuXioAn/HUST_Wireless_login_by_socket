@@ -243,7 +243,7 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
     //连接成功，下面生成请求
     //先把querystr里的等号和与符号变成两次url格式，再根据content的长度修改headers里的长度。
     //最后拼起来
-    char login_str[1024]={0},content[1024]={0};
+    char login_str[2048]={0},content[1024]={0};
 
     char* place=NULL;
     while(place=strstr(querystr,"=")){
@@ -269,7 +269,7 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
         "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n"
         "Accept-Encoding: gzip, deflate\r\nContent-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n"
         "Content-Length: %d\r\nOrigin: http://%s:%d\r\nConnection: keep-alive\r\n\r\n%s",\
-        login_host,login_port,strlen(content),login_host,login_port,content);
+        login_host,login_port,(int)strlen(content),login_host,login_port,content);
 
     printf("[*]Login request:\n%s\n",login_str);
 
