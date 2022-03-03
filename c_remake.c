@@ -22,6 +22,8 @@
 #include<arpa/inet.h>
 #include <netinet/tcp.h>
 
+#define HELP_STR "Usage: -u Youraccount -p Yourpassword"
+
 int info_request(char*,char*,int,char*);
 int login(char*,int,char*,char*,char*);
 
@@ -47,12 +49,20 @@ int main(int argc,char ** argv){
         {
         case 'u':
             strcpy(id,optarg);
+            printf("[*]Using ID: %s\n",id);
             break;
         case 'p':
             strcpy(pwd,optarg);
+            printf("[*]Using password: %s\n",pwd);
+            break;
+        case 'h':
+            printf("[*]%s\n",HELP_STR);
+            exit(0);
             break;
         
         default:
+            printf("[!]Unsupported argument, '-h' may help you\n");
+            exit(-1);
             break;
         }
     }
