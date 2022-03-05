@@ -59,11 +59,21 @@ int main(int argc,char ** argv){
         switch (opt)
         {
         case 'u':
-            strcpy(id,optarg);
+            if(strlen(optarg)<20){//避免不合理参数
+                strcpy(id,optarg);
+            }else{
+                printf("[!]Is your ID really that long??? \n");
+                exit(-1);
+            }
             //printf("[*]Using ID: %s\n",id);
             break;
         case 'p':
-            strcpy(pwd,optarg);
+            if(strlen(optarg)<40){
+                strcpy(pwd,optarg);
+            }else{
+                printf("[!]Long long password, good good memory!\n");
+                exit(-1);
+            }
             //printf("[*]Using password: %s\n",pwd);
             break;
         case 'h':
@@ -74,13 +84,23 @@ int main(int argc,char ** argv){
             switch (long_option_flag)
             {
             case 1:
-                strcpy(login_host,optarg);
+                if(strlen(optarg)<20){
+                    strcpy(login_host,optarg);
+                }else{
+                    printf("[!]Please check the IP address!\n");
+                    exit(-1);
+                }
                 break;
             case 2:
                 login_port=atoi(optarg);
                 break;
             case 3:
-                strcpy(redirect_host,optarg);
+                if(strlen(optarg)<20){
+                    strcpy(redirect_host,optarg);
+                }else{
+                    printf("[!]Please check the IP address!\n");
+                    exit(-1);
+                }
                 break;
             case 4:
                 redirect_port=atoi(optarg);
@@ -109,7 +129,7 @@ int main(int argc,char ** argv){
 
 
     char querystr[1024]={0};
-    char redirect_request_str[1024]={0};
+    char redirect_request_str[512]={0};
 
     sprintf(redirect_request_str,"GET / HTTP/1.1\r\nHost: %s:%d\r\n\
     User-Agent: C Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n\
