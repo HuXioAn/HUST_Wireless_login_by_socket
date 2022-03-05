@@ -28,6 +28,8 @@
 
 int info_request(char*,char*,int,char*);
 int login(char*,int,char*,char*,char*);
+int logout(void);
+int logout_with_userIndex(char* userIndex);
 
 
 char redirect_host[20]="123.123.123.123";
@@ -107,6 +109,8 @@ int main(int argc,char ** argv){
                 break;
             case 10:
                 //TODO:LOGOUT
+                if(0==logout())exit(0);
+                else exit(-1);
             default:
                 printf("[!]Unsupported argument, '-h' may help you\n");
                 exit(-1);
@@ -229,6 +233,7 @@ int info_request(char* querystr,char* redirect_host,int redirect_port,char* redi
 }
 
 
+
 int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
 
     printf("[*]Trying to login\n");
@@ -317,3 +322,145 @@ int login(char* login_host,int login_port,char* querystr,char* id,char* pwd){
 
 
 
+int logout(void){
+    //访问http://login_host:login_port/eportal/redirectortosuccess.jsp获取userindex
+    //如果获取到重定向地址则未登录，如果得到index继续退出。
+    
+    struct sockaddr_in logout;
+    char state_check[1024]={0};
+    char response[1024]={0};
+    char userIndex[256]={0};
+
+    //创建socket
+    int socket_desc=socket(AF_INET,SOCK_STREAM,0);
+    if(socket_desc==-1){
+        printf("[!]Error creating socket\n");
+        return -1;
+
+    }
+
+    logout.sin_addr.s_addr=inet_addr(login_host);
+    logout.sin_family=AF_INET;
+    logout.sin_port=htons(login_port);
+   //连接
+    
+    int syncnt = 2;
+    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
+
+    if(connect(socket_desc,(struct sockaddr *)&logout,sizeof(logout))<0){
+        printf("[!]Error Connecting\n");
+        return -1;
+
+    }else {
+        printf("[*]Connected to authenticate server successfully\n");
+    }
+
+   
+
+    //替换header里的长度
+    sprintf(state_check,"GET /eportal/redirectortosuccess.jsp HTTP/1.1\r\n"
+        "Host: %s:%d\r\nUser-Agent: C Socket\r\n"
+        "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n"
+        "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n"
+        "Accept-Encoding: gzip, deflate\r\n"
+        "Connection: keep-alive\r\n\r\n",\
+        login_host,login_port);
+
+
+        if(send(socket_desc,state_check,strlen(state_check),0)<0){
+            printf("[!]Error sending\n");
+            return -1;
+        }
+        //接收
+        if(recv(socket_desc,response,1024,0)<0){
+            printf("[!]Error receiving\n");
+            return -1;
+        }
+        close(socket_desc);
+        if(strstr(response,"userIndex")){//获得了userIndex
+            char * index_head_p = strstr(response,"userIndex=");//包含了userIndex=，方便后面
+            char * index_tail_p=strstr(index_head_p,"\r\n");
+            *index_tail_p='\0';
+            if((index_tail_p-index_head_p)<256){
+                strcpy(userIndex,index_head_p);
+            }else{
+                printf("[!]Why is your userIndex longer than 256 characters?\n");
+                return -1;
+            }
+            //得到userIndex，准备登出
+            if(logout_with_userIndex(userIndex)==0)return 0;
+            else return -1;
+        }else{//未登录
+            printf("[!]Failed to logout!\n");
+            return -1;
+        }
+
+
+}
+
+
+int logout_with_userIndex(char * userIndex){
+   
+    struct sockaddr_in logout;
+    char logout_str[1024]={0};
+    char response[1024]={0};
+
+    //创建socket
+    int socket_desc=socket(AF_INET,SOCK_STREAM,0);
+    if(socket_desc==-1){
+        printf("[!]Error creating socket\n");
+        return -1;
+
+    }
+
+    logout.sin_addr.s_addr=inet_addr(login_host);
+    logout.sin_family=AF_INET;
+    logout.sin_port=htons(login_port);
+   //连接
+    
+    int syncnt = 2;
+    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
+
+    if(connect(socket_desc,(struct sockaddr *)&logout,sizeof(logout))<0){
+        printf("[!]Error Connecting\n");
+        return -1;
+
+    }else {
+        printf("[*]Connected to authenticate server successfully\n");
+    }
+
+   
+
+    //替换header里的长度
+    sprintf(logout_str,"POST /eportal/InterFace.do?method=logout HTTP/1.1\r\n"
+        "Host: %s:%d\r\nUser-Agent: C Socket\r\n"
+        "Accept: */*\r\n"
+        "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\n"
+        "Accept-Encoding: gzip, deflate\r\n"
+        "Content-Type: application/x-www-form-urlencoded; charset=UTF-8\r\n"
+        "Content-Length: %d\r\n"
+        "Origin: http://172.18.18.60:8080\r\n"
+        "Connection: keep-alive\r\n\r\n%s",\
+        login_host,login_port,(int)strlen(userIndex),userIndex);
+
+
+        if(send(socket_desc,logout_str,strlen(logout_str),0)<0){
+            printf("[!]Error sending\n");
+            return -1;
+        }
+        //接收
+        if(recv(socket_desc,response,1024,0)<0){
+            printf("[!]Error receiving\n");
+            return -1;
+        }
+        close(socket_desc);
+        if(strstr(response,"success")){
+            printf("[*]Logout Successfully \n");
+            return 0;
+        }else{
+            printf("[!]Failed to logout, due to unknown reasons...\n");
+            exit(-1);
+        }
+        
+
+}
