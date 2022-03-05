@@ -23,8 +23,8 @@
 #include<arpa/inet.h>
 #include <netinet/tcp.h>
 
-#define HELP_STR "[*]Usage: -u Youraccount -p Yourpassword\n\
-[*]Further usage:--redirect_host xx.xx.xx.xx --redirect_port xx --login_host xx.xx.xx.xx --login_port xx\n"
+#define HELP_STR "[*]Usage:使用 \"-u id -p password\"来登录,使用\"--logout\"下线已登录的账户.\
+\n[*]Further usage:--redirect_host xx.xx.xx.xx --redirect_port xx --login_host xx.xx.xx.xx --login_port xx"
 
 int info_request(char*,char*,int,char*);
 int login(char*,int,char*,char*,char*);
@@ -352,7 +352,7 @@ int logout(void){
         return -1;
 
     }else {
-        printf("[*]Connected to authenticate server successfully\n");
+        printf("[*]Connected to redirectortosuccess server successfully\n");
     }
 
    
@@ -426,7 +426,7 @@ int logout_with_userIndex(char * userIndex){
         return -1;
 
     }else {
-        printf("[*]Connected to authenticate server successfully\n");
+        printf("[*]Connected to logout server successfully\n");
     }
 
    
@@ -455,7 +455,7 @@ int logout_with_userIndex(char * userIndex){
         }
         close(socket_desc);
         if(strstr(response,"success")){
-            printf("[*]Logout Successfully \n");
+            printf("[*]Logout Successfully!\n");
             return 0;
         }else{
             printf("[!]Failed to logout, due to unknown reasons...\n");
