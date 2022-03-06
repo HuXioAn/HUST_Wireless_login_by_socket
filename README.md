@@ -17,4 +17,20 @@ C语言版本严谨了一些。。。毕竟要在路由器上一直跑。
 2022/3/5:
 添加命令行参数，通过命令行修改用户、密码、认证\重定向地址、端口。
 
-使用`-h`参数查看用法。
+`-h`：帮助
+
+``` shell
+ user@localhost:~$./a.out -h
+[*]Usage:使用 "-u id -p password"来登录,使用"--logout"下线已登录的账户.
+[*]Further usage:--redirect_host xx.xx.xx.xx --redirect_port xx --login_host xx.xx.xx.xx --login_port xx
+```
+
+使用`--redirect_host`、`--redirect_port`、`--login_host`、`--login_port`来更改相应地址与端口。
+
+----
+2022/3/6：
+
+添加登出功能，通过`--logout`可以下线本机或上游网络设备（主机、路由器）上已经登陆的校园网账户。
+
+
+
