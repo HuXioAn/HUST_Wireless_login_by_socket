@@ -30,6 +30,7 @@ int info_request(char *, char *, int, char *);
 int login(char *, int, char *, char *, char *);
 int logout(void);
 int logout_with_userIndex(char *userIndex);
+int create_socket(const char* host,const int port,int retry,const char *title);
 
 char redirect_host[20] = "123.123.123.123";
 int redirect_port = 80;
@@ -492,4 +493,45 @@ int logout_with_userIndex(char *userIndex)
         printf("[!]Failed to logout, due to unknown reasons...\n");
         exit(-1);
     }
+}
+
+
+
+int create_socket(const char* host,const int port,int retry,const char *title){
+    struct sockaddr_in addr;
+
+    //创建socket
+    int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_desc == -1)
+    {
+        printf("[!]%s:Error creating socket\n",title);
+        return -1;
+    }
+
+    addr.sin_addr.s_addr = inet_addr(host);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    //连接
+    //设置连接超时应对已经连接的情况
+    int syncnt = 2;
+    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
+
+    if (connect(socket_desc, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        printf("[!]%s:Error Connecting.\n",title);
+        return -1;
+    }
+    else
+    {
+        printf("[*]%s:Connected to %s:%d successfully.\n",title,host,port);
+    }
+
+    struct timeval timeout = {3, 0};
+    //设置接收超时
+    if(-1==setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval))){
+        return -1;
+    }
+
+    return socket_desc;
+
 }
