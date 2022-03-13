@@ -150,7 +150,7 @@ int main(int argc, char **argv)
     Connection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n",
             redirect_host, redirect_port);
 
-    if (info_request(querystr, redirect_host, redirect_port, redirect_request_str))
+    if (!info_request(querystr, redirect_host, redirect_port, redirect_request_str))
         ;
     else
     {
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    if (login(login_host, login_port, querystr, id, pwd))
+    if (!login(login_host, login_port, querystr, id, pwd))
         ;
     else
     {
@@ -176,6 +176,7 @@ int info_request(char *querystr, const char *redirect_host, const int redirect_p
     char response[1024] = {0};
 
     int socket_desc = create_socket(redirect_host, redirect_port, 3, "INFO REQUEST");
+    if(-1==socket_desc)return -1;
 
     printf("[*]requesting redirection : \r\n");
     while (flag < 3)
@@ -196,12 +197,12 @@ int info_request(char *querystr, const char *redirect_host, const int redirect_p
 
         //处理报文获得querystr
         if (NULL == strstr(response, "wlanuserip"))
-        {
+        {//找不到
             if (flag == 3)
             {
                 printf("[!]Trouble requesting querystr\n");
                 close(socket_desc);
-                return 0;
+                return -1;
             }
         }
         else
@@ -213,12 +214,12 @@ int info_request(char *querystr, const char *redirect_host, const int redirect_p
             {
                 printf("[*]QueryString is as below:\r\n%s\n", querystr);
                 close(socket_desc);
-                return 1;
+                return 0;
             }
         }
     }
-
-    return 0;
+    close(socket_desc);
+    return -1;
 }
 
 int login(const char *login_host, const int login_port, char *querystr, char *id, char *pwd)
@@ -228,6 +229,7 @@ int login(const char *login_host, const int login_port, char *querystr, char *id
     char response[1024] = {0};
 
     int socket_desc = create_socket(login_host, login_port, 3, "LOGIN");
+    if(-1==socket_desc)return -1;
 
     //连接成功，下面生成请求
     //先把querystr里的等号和与符号变成两次url格式，再根据content的长度修改headers里的长度。
@@ -268,22 +270,22 @@ int login(const char *login_host, const int login_port, char *querystr, char *id
     if (send(socket_desc, login_str, strlen(login_str), 0) < 0)
     {
         printf("[!]Error sending\n");
-        return 0;
+        return -1;
     }
     //接收
     if (recv(socket_desc, response, 1024, 0) < 0)
     {
         printf("[!]Error receiving\n");
-        return 0;
+        return -1;
     }
     close(socket_desc);
     if (strstr(response, "success"))
     {
         printf("[*]login Successfully \n");
-        return 1;
+        return 0;
     }
 
-    return 0;
+    return -1;
 }
 
 int logout(void)
@@ -296,6 +298,7 @@ int logout(void)
     char userIndex[256] = {0};
 
     int socket_desc = create_socket(login_host, login_port, 3, "LOGOUT-USERINDEX");
+    if(-1==socket_desc)return -1;
 
     //替换header里的长度
     sprintf(state_check, "GET /eportal/redirectortosuccess.jsp HTTP/1.1\r\n"
@@ -353,6 +356,8 @@ int logout_with_userIndex(char *userIndex)
 
     int socket_desc = create_socket(login_host, login_port, 3, "LOGOUT");
 
+    if(-1==socket_desc)return -1;
+
     //替换header里的长度
     sprintf(logout_str, "POST /eportal/InterFace.do?method=logout HTTP/1.1\r\n"
                         "Host: %s:%d\r\nUser-Agent: C Socket\r\n"
@@ -385,7 +390,7 @@ int logout_with_userIndex(char *userIndex)
     else
     {
         printf("[!]Failed to logout, due to unknown reasons...\n");
-        exit(-1);
+        return -1;
     }
 }
 
@@ -422,7 +427,7 @@ int create_socket(const char *host, const int port, int retry, const char *title
         if (connect(socket_desc, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
             count++;
-            printf("[!]%s:Error Connecting.%d times left.\n", title, 3 - count);
+            printf("[!]%s:Error Connecting. %d time(s) left.\n", title, 3 - count);
         }
         else
         {
@@ -430,6 +435,6 @@ int create_socket(const char *host, const int port, int retry, const char *title
             return socket_desc;
         }
     }
-
+    printf("[!]%s:Error Connecting to %s:%d\n", title, host, port);
     return -1;
 }
