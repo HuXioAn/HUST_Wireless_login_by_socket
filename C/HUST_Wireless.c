@@ -26,11 +26,11 @@
 #define HELP_STR "[*]Usage:使用 \"-u id -p password\"来登录,使用\"--logout\"下线已登录的账户.\
 \n[*]Further usage:--redirect_host xx.xx.xx.xx --redirect_port xx --login_host xx.xx.xx.xx --login_port xx"
 
-int info_request(char *, char *, int, char *);
-int login(char *, int, char *, char *, char *);
+int info_request(char *, const char *, const int, char *);
+int login(const char *, const int, char *, char *, char *);
 int logout(void);
 int logout_with_userIndex(char *userIndex);
-int create_socket(const char* host,const int port,int retry,const char *title);
+int create_socket(const char *host, const int port, int retry, const char *title);
 
 char redirect_host[20] = "123.123.123.123";
 int redirect_port = 80;
@@ -169,43 +169,13 @@ int main(int argc, char **argv)
     exit(0);
 }
 
-int info_request(char *querystr, char *redirect_host, int redirect_port, char *redirect_request_str)
+int info_request(char *querystr, const char *redirect_host, const int redirect_port, char *redirect_request_str)
 {
     //获取querystr
     int flag = 0;
-    struct sockaddr_in redirect;
     char response[1024] = {0};
 
-    //创建socket
-    int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_desc == -1)
-    {
-        printf("[!]Error creating socket\n");
-        return 0;
-    }
-
-    redirect.sin_addr.s_addr = inet_addr(redirect_host);
-    redirect.sin_family = AF_INET;
-    redirect.sin_port = htons(redirect_port);
-    //连接
-    //设置连接超时应对已经连接的情况
-    int syncnt = 2;
-    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
-
-    if (connect(socket_desc, (struct sockaddr *)&redirect, sizeof(redirect)) < 0)
-    {
-        printf("[!]Error Connecting redirection, chances are that you've already been online.\n");
-        return 0;
-    }
-    else
-    {
-        printf("[*]Connected to redirection server successfully\n");
-    }
-
-    struct timeval timeout = {3, 0};
-
-    //设置接收超时
-    setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
+    int socket_desc = create_socket(redirect_host, redirect_port, 3, "INFO REQUEST");
 
     printf("[*]requesting redirection : \r\n");
     while (flag < 3)
@@ -251,39 +221,13 @@ int info_request(char *querystr, char *redirect_host, int redirect_port, char *r
     return 0;
 }
 
-int login(char *login_host, int login_port, char *querystr, char *id, char *pwd)
+int login(const char *login_host, const int login_port, char *querystr, char *id, char *pwd)
 {
 
     printf("[*]Trying to login\n");
-
-    struct sockaddr_in login;
     char response[1024] = {0};
 
-    //创建socket
-    int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_desc == -1)
-    {
-        printf("[!]Error creating socket\n");
-        return 0;
-    }
-
-    login.sin_addr.s_addr = inet_addr(login_host);
-    login.sin_family = AF_INET;
-    login.sin_port = htons(login_port);
-    //连接
-
-    int syncnt = 2;
-    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
-
-    if (connect(socket_desc, (struct sockaddr *)&login, sizeof(login)) < 0)
-    {
-        printf("[!]Error Connecting\n");
-        return 0;
-    }
-    else
-    {
-        printf("[*]Connected to authenticate server successfully\n");
-    }
+    int socket_desc = create_socket(login_host, login_port, 3, "LOGIN");
 
     //连接成功，下面生成请求
     //先把querystr里的等号和与符号变成两次url格式，再根据content的长度修改headers里的长度。
@@ -347,36 +291,11 @@ int logout(void)
     //访问http://login_host:login_port/eportal/redirectortosuccess.jsp获取userindex
     //如果获取到重定向地址则未登录，如果得到index继续退出。
 
-    struct sockaddr_in logout;
     char state_check[1024] = {0};
     char response[1024] = {0};
     char userIndex[256] = {0};
 
-    //创建socket
-    int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_desc == -1)
-    {
-        printf("[!]Error creating socket\n");
-        return -1;
-    }
-
-    logout.sin_addr.s_addr = inet_addr(login_host);
-    logout.sin_family = AF_INET;
-    logout.sin_port = htons(login_port);
-    //连接
-
-    int syncnt = 2;
-    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
-
-    if (connect(socket_desc, (struct sockaddr *)&logout, sizeof(logout)) < 0)
-    {
-        printf("[!]Error Connecting\n");
-        return -1;
-    }
-    else
-    {
-        printf("[*]Connected to redirectortosuccess server successfully\n");
-    }
+    int socket_desc = create_socket(login_host, login_port, 3, "LOGOUT-USERINDEX");
 
     //替换header里的长度
     sprintf(state_check, "GET /eportal/redirectortosuccess.jsp HTTP/1.1\r\n"
@@ -429,35 +348,10 @@ int logout(void)
 int logout_with_userIndex(char *userIndex)
 {
 
-    struct sockaddr_in logout;
     char logout_str[1024] = {0};
     char response[1024] = {0};
 
-    //创建socket
-    int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_desc == -1)
-    {
-        printf("[!]Error creating socket\n");
-        return -1;
-    }
-
-    logout.sin_addr.s_addr = inet_addr(login_host);
-    logout.sin_family = AF_INET;
-    logout.sin_port = htons(login_port);
-    //连接
-
-    int syncnt = 2;
-    setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
-
-    if (connect(socket_desc, (struct sockaddr *)&logout, sizeof(logout)) < 0)
-    {
-        printf("[!]Error Connecting\n");
-        return -1;
-    }
-    else
-    {
-        printf("[*]Connected to logout server successfully\n");
-    }
+    int socket_desc = create_socket(login_host, login_port, 3, "LOGOUT");
 
     //替换header里的长度
     sprintf(logout_str, "POST /eportal/InterFace.do?method=logout HTTP/1.1\r\n"
@@ -495,16 +389,16 @@ int logout_with_userIndex(char *userIndex)
     }
 }
 
-
-
-int create_socket(const char* host,const int port,int retry,const char *title){
+int create_socket(const char *host, const int port, int retry, const char *title)
+{
     struct sockaddr_in addr;
+    int count = 0;
 
     //创建socket
     int socket_desc = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_desc == -1)
     {
-        printf("[!]%s:Error creating socket\n",title);
+        printf("[!]%s:Error creating socket\n", title);
         return -1;
     }
 
@@ -516,22 +410,26 @@ int create_socket(const char* host,const int port,int retry,const char *title){
     int syncnt = 2;
     setsockopt(socket_desc, IPPROTO_TCP, TCP_SYNCNT, &syncnt, sizeof(syncnt));
 
-    if (connect(socket_desc, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-    {
-        printf("[!]%s:Error Connecting.\n",title);
-        return -1;
-    }
-    else
-    {
-        printf("[*]%s:Connected to %s:%d successfully.\n",title,host,port);
-    }
-
     struct timeval timeout = {3, 0};
     //设置接收超时
-    if(-1==setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval))){
+    if (-1 == setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval)))
+    {
         return -1;
     }
 
-    return socket_desc;
+    while (count < retry)
+    {
+        if (connect(socket_desc, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        {
+            count++;
+            printf("[!]%s:Error Connecting.%d times left.\n", title, 3 - count);
+        }
+        else
+        {
+            printf("[*]%s:Connected to %s:%d successfully.\n", title, host, port);
+            return socket_desc;
+        }
+    }
 
+    return -1;
 }
