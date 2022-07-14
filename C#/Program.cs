@@ -3,36 +3,78 @@ using static System.Console;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.CommandLine;
+using System.CommandLine.Invocation;
+using System.IO;
+
+/*
+Author:胡小安
+Date:2022年7月14日
+华科校园网（锐捷）Web认证程序-C#版
+请使用"-h"参数获取使用方法
+*/
 
 
 namespace HUSTwireless{
     public class client{
 
+        static public int commandLineHandler(bool logout, string id, string pwd, string redirectHost, int redirectPort, string loginHost, int loginPort){
+            if(logout == true){
+                return client.logout(loginHost,loginPort);
+            }else{
+                WriteLine($"[*]Going to login with:\n    Host:{loginHost}:{loginPort}\n    Redirect:{redirectHost}:{redirectPort}\n    ID:{id}");
+                string redirectRequestStr = $"GET / HTTP/1.1\r\nHost: {redirectHost}:{redirectPort}\r\n"+
+                "User-Agent: C Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n"+
+                "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\n"+
+                "Connection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
+            
+                string? queryStr = infoRequest(redirectHost,redirectPort,redirectRequestStr);
+                if(queryStr != null){
+                    if(0 == login(loginHost,loginPort,queryStr,id,pwd))return 0;
+                }
+                return -1;
+            }
+        }
         
 
 
-        public static int Main(string[] arg){
+        static public int Main(string[] arg){
 
-            string redirectHost = "123.123.123.123";
-            int redirectPort = 80;
-            string loginHost = "172.18.18.60";
-            int loginPort = 8080;
-            string id = "";
-            string pwd = "";
+            var optionLogout = new Option<bool>(name: "--logout",description: "登出本机或上游设备上的认证",getDefaultValue: ()=> false);
+            var optionUser = new Option<string>("-u","账户");
+            var optionPwd = new Option<string>("-p","认证密码");
+            var optionRhost = new Option<string>(name: "--redirect_host",description: "重定向服务地址", getDefaultValue: ()=>"123.123.123.123");
+            var optionRport = new Option<int>(name: "--redirect_port",description: "重定向服务端口",getDefaultValue: ()=>80);
+            var optionLhost = new Option<string>(name: "--login_host",description: "认证服务地址",getDefaultValue: ()=>"172.18.18.60");
+            var optionLport = new Option<int>(name: "--login_port",description: "认证服务端口",getDefaultValue: ()=> 8080);
 
-            // WriteLine($"[*]Going to login with:\n    Host:{loginHost}:{loginPort}\n    Redirect:{redirectHost}:{redirectPort}\n    ID:{id}");
-            // string redirectRequestStr = $"GET / HTTP/1.1\r\nHost: {redirectHost}:{redirectPort}\r\n"+
-            //     "User-Agent: C Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n"+
-            //     "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\n"+
-            //     "Connection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
-            
-            // string? queryStr = infoRequest(redirectHost,redirectPort,redirectRequestStr);
-            // if(queryStr != null){
-            //     if(0 == login(loginHost,loginPort,queryStr,id,pwd))return 0;
-            // }
+            var rootCommand = new RootCommand{
+                optionLogout,
+                optionUser,
+                optionPwd,
+                optionRhost,
+                optionRport,
+                optionLhost,
+                optionLport
+            };
 
-            logout(loginHost,loginPort);
-            return -1;
+            rootCommand.Description = "华科校园网web认证程序";
+            rootCommand.TreatUnmatchedTokensAsErrors = true;
+
+            rootCommand.SetHandler((logout, id, pwd, redirectHost, redirectPort, loginHost, loginPort)=>
+                {commandLineHandler(logout, id, pwd, redirectHost, redirectPort, loginHost, loginPort);},
+                optionLogout,
+                optionUser,
+                optionPwd,
+                optionRhost,
+                optionRport,
+                optionLhost,
+                optionLport
+                );
+
+            rootCommand.Invoke(arg);
+
+            return 0;
         }
 
         static public Socket? createSocket(string ip, int port){
