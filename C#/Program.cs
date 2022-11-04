@@ -6,6 +6,8 @@ using System.Text;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 /*
 Author:胡小安
@@ -16,6 +18,20 @@ Date:2022年7月14日
 
 
 namespace HUSTwireless{
+
+    public class account{
+        public string id{set; get;}
+        public string password{set; get;}
+        public bool encrypt{set; get;} = false;
+        public TimeSpan? availableMoment{set; get;} = new TimeSpan(0,0,0);
+        public TimeSpan? availableSpan{set; get;} = new TimeSpan(24,0,0);
+
+        public bool isAvailable(){
+            var time = DateTime.Now - DateTime.Today;
+            if((time > availableMoment) && ((time - availableMoment) < availableSpan))return true;
+            else return false;
+        }
+    }
     public class client{
 
         static public int commandLineHandler(bool logout, string id, string pwd, string redirectHost, int redirectPort, string loginHost, int loginPort){
