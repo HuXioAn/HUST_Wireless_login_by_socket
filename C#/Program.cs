@@ -19,10 +19,10 @@ Date:2022年7月14日
 
 namespace HUSTwireless{
 
-    public class account{
+    public class authAccount{
         public string id{set; get;}
         public string password{set; get;}
-        public bool encrypt{set; get;} = false;
+        public bool encrypt{set; get;}
         public TimeSpan? availableMoment{set; get;} = new TimeSpan(0,0,0);
         public TimeSpan? availableSpan{set; get;} = new TimeSpan(24,0,0);
 
@@ -32,7 +32,18 @@ namespace HUSTwireless{
             else return false;
         }
     }
+
+    public class authServer{
+        public string redirectHost{set; get;}
+        public string redirectPort{set; get;}
+        public string loginHost{set; get;}
+        public string loginPort{set; get;}
+
+    }
     public class client{
+        public authServer server;
+        public authAccount account;
+
 
         static public int commandLineHandler(bool logout, string id, string pwd, string redirectHost, int redirectPort, string loginHost, int loginPort){
             if(logout == true){
