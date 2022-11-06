@@ -1,0 +1,6 @@
+{
+    "redirectHost":"123.123.123.123",
+    "redirectPort":"80",
+    "loginHost":"192.168.50.3",
+    "loginPort":"8080"
+}
