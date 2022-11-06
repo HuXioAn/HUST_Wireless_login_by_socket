@@ -1,7 +1,7 @@
 {
-    "id":"U2020XXXXX",
-    "password":"",
-    "encrypt":"false",
-    "availableMoment":"0:0:0",
-    "availableSpan":"24:0:0"
+    "id":"U2020xxxxx",
+    "password":"xxxxxxx",
+    "encrypt":false,
+    "availableTime":"6:00",
+    "Span":"18:00"
 }

@@ -32,18 +32,12 @@ namespace HUSTwireless{
 
         public string availableTime{
             set{
-                TimeSpan.TryParse(availableTime, out availableMoment);
-            }
-            get{
-                return availableTime;
+                TimeSpan.TryParse(value, out availableMoment);
             }
         }
         public string? Span{
             set{
-                TimeSpan.TryParse(Span, out availableSpan);
-            }
-            get{
-                return Span;
+                TimeSpan.TryParse(value, out availableSpan);
             }
         }
 
@@ -85,20 +79,32 @@ namespace HUSTwireless{
         static int commandLineHandlerLogin(string accountConfig, string serverConfig,
                                             string id, string pwd, string redirectHost, 
                                             int redirectPort, string loginHost, int loginPort){
+            
+                                                
+            
 
-            WriteLine($"[*]Going to login with:\n    Host:{loginHost}:{loginPort}\n    Redirect:{redirectHost}:{redirectPort}\n    ID:{id}");
+            if(!string.IsNullOrWhiteSpace(serverConfig)){
+                var serverText = File.ReadAllText(serverConfig);
+                server = JsonSerializer.Deserialize<authServer>(serverText)!;
+            }else{
+                server.redirectHost = redirectHost;
+                server.redirectPort = redirectPort;
+                server.loginHost = loginHost;
+                server.loginPort = loginPort;
+            }
 
-            server.redirectHost = redirectHost;
-            server.redirectPort = redirectPort;
-            server.loginHost = loginHost;
-            server.loginPort = loginPort;
+            if(!string.IsNullOrWhiteSpace(accountConfig)){
+                var accountText = File.ReadAllText(accountConfig);
+                account = JsonSerializer.Deserialize<authAccount>(accountText)!;
+            }else{
+                account.id = id;
+                account.password = pwd;
+                account.encrypt = false;
+            }
 
-            account.id = id;
-            account.password = pwd;
-            account.encrypt = false;
-
-        
+            WriteLine($"[*]Going to login with:\n    Host:{server.loginHost}:{server.loginPort}\n    Redirect:{server.redirectHost}:{server.redirectPort}\n ");
             server.queryStr = infoRequest();
+
             if(account.isAvailable() ){
                 if(0 == login())return 0;
             }
