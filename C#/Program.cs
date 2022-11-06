@@ -60,28 +60,28 @@ namespace HUSTwireless{
         public static authAccount account = new authAccount();
 
 
-        static public int commandLineHandler(bool logout, string id, string pwd, string redirectHost, int redirectPort, string loginHost, int loginPort){
-            if(logout == true){
-                return client.logout(loginHost,loginPort);
-            }else{
-                WriteLine($"[*]Going to login with:\n    Host:{loginHost}:{loginPort}\n    Redirect:{redirectHost}:{redirectPort}\n    ID:{id}");
+        static int commandLineHandlerLogin(string accountConfig, string serverConfig,
+                                            string id, string pwd, string redirectHost, 
+                                            int redirectPort, string loginHost, int loginPort){
 
-                server.redirectHost = redirectHost;
-                server.redirectPort = redirectPort;
-                server.loginHost = loginHost;
-                server.loginPort = loginPort;
+            WriteLine($"[*]Going to login with:\n    Host:{loginHost}:{loginPort}\n    Redirect:{redirectHost}:{redirectPort}\n    ID:{id}");
 
-                account.id = id;
-                account.password = pwd;
-                account.encrypt = false;
+            server.redirectHost = redirectHost;
+            server.redirectPort = redirectPort;
+            server.loginHost = loginHost;
+            server.loginPort = loginPort;
 
-            
-                server.queryStr = infoRequest();
-                if(account.isAvailable() ){
-                    if(0 == login())return 0;
-                }
-                return -1;
+            account.id = id;
+            account.password = pwd;
+            account.encrypt = false;
+
+        
+            server.queryStr = infoRequest();
+            if(account.isAvailable() ){
+                if(0 == login())return 0;
             }
+            return -1;
+            
         }
         
 
@@ -89,43 +89,63 @@ namespace HUSTwireless{
         static public int Main(string[] arg){
 
             var optionLogout = new Option<bool>(name: "--logout",description: "登出本机或上游设备上的认证",getDefaultValue: ()=> false);
+            var optionAConfig = new Option<string>("--ac", "指定账户信息配置文件");
+            var optionSConfig = new Option<string>("--sc", "指定认证服务器信息配置文件");
             var optionUser = new Option<string>("-u","账户");
             var optionPwd = new Option<string>("-p","认证密码");
             var optionRhost = new Option<string>(name: "--redirect_host",description: "重定向服务地址", getDefaultValue: ()=>"123.123.123.123");
             var optionRport = new Option<int>(name: "--redirect_port",description: "重定向服务端口",getDefaultValue: ()=>80);
             var optionLhost = new Option<string>(name: "--login_host",description: "认证服务地址",getDefaultValue: ()=>"172.18.18.60");
             var optionLport = new Option<int>(name: "--login_port",description: "认证服务端口",getDefaultValue: ()=> 8080);
+            
+            
 
-            var rootCommand = new RootCommand{
-                optionLogout,
-                optionUser,
-                optionPwd,
-                optionRhost,
-                optionRport,
-                optionLhost,
-                optionLport
-            };
-
-            rootCommand.Description = "华科校园网web认证程序";
+            var rootCommand = new RootCommand("校园网认证");
             rootCommand.TreatUnmatchedTokensAsErrors = true;
 
-            rootCommand.SetHandler((logout, id, pwd, redirectHost, redirectPort, loginHost, loginPort)=>
-                {commandLineHandler(logout, id, pwd, redirectHost, redirectPort, loginHost, loginPort);},
-                optionLogout,
-                optionUser,
-                optionPwd,
-                optionRhost,
-                optionRport,
-                optionLhost,
-                optionLport
-                );
+            var logoutCommand = new Command("logout", "登出本机或上游设备上的认证");
+            rootCommand.AddCommand(logoutCommand);
 
-            rootCommand.Invoke(arg);
+            logoutCommand.AddOption(optionLhost);
+            logoutCommand.AddOption(optionLport);
+
+            var loginCommand = new Command("login", "进行网络认证");
+            rootCommand.AddCommand(loginCommand);
+
+            loginCommand.AddOption(optionAConfig);
+            loginCommand.AddOption(optionSConfig);
+            loginCommand.AddOption(optionUser);
+            loginCommand.AddOption(optionPwd);
+            loginCommand.AddOption(optionRhost);
+            loginCommand.AddOption(optionRport);
+            loginCommand.AddOption(optionLhost);
+            loginCommand.AddOption(optionLport);
+
+            logoutCommand.SetHandler(
+                (host, port)=>{logout(host,port);},
+                optionLhost,optionLport
+            );
+
+            loginCommand.SetHandler(
+                (accountConfig, serverConfig, id, 
+                pwd, redirectHost, redirectPort, 
+                loginHost, loginPort)=>{
+                    commandLineHandlerLogin(
+                        accountConfig, serverConfig,
+                        id, pwd, redirectHost, 
+                        redirectPort, loginHost, loginPort);
+                },
+                optionAConfig,optionSConfig,
+                optionUser,optionPwd,optionRhost,
+                optionRport,optionLhost,optionLport
+            );
+
+            rootCommand.InvokeAsync(arg);
 
             return 0;
         }
 
-        static public Socket? createSocket(string ip, int port){
+        static  Socket? createSocket(string ip, int port){
 
             try{
             IPAddress ipAddress = IPAddress.Parse(ip);
@@ -141,7 +161,7 @@ namespace HUSTwireless{
             
         }
 
-        static public string? infoRequest(){
+        static  string? infoRequest(){
             byte[] response = new byte[2048];
             Socket? querySocket = createSocket(server.redirectHost,server.redirectPort);
             if(querySocket == null)return null;
@@ -179,7 +199,7 @@ namespace HUSTwireless{
 
         }
 
-        static public int login(){
+        static  int login(){
 
             if(server.queryStr == null)return -1;
             
@@ -226,7 +246,7 @@ namespace HUSTwireless{
 
         }
 
-        static public int logout(string ip, int port){
+        static  int logout(string ip, int port){
             byte[] response = new byte[2048];
             string userIndex;
             Socket? logoutSocket = createSocket(ip,port);
@@ -270,7 +290,7 @@ namespace HUSTwireless{
             
         }
 
-        static public int logoutWithUserIndex(string ip, int port, string userIndex){
+        static  int logoutWithUserIndex(string ip, int port, string userIndex){
             byte[] response = new byte[2048];
             Socket? logoutSocket = createSocket(ip,port);
             if(logoutSocket == null)return -1;
