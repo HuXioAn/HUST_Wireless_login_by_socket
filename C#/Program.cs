@@ -35,14 +35,29 @@ namespace HUSTwireless{
 
     public class authServer{
         public string redirectHost{set; get;}
-        public string redirectPort{set; get;}
+        public int redirectPort{set; get;}
         public string loginHost{set; get;}
-        public string loginPort{set; get;}
+        public int loginPort{set; get;}
+
+        string redirectRequestStrTemplate = "GET / HTTP/1.1\r\nHost: {redirectHost}:{redirectPort}\r\n"+
+                "User-Agent: C Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n"+
+                "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\n"+
+                "Connection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
+
+        public string redirectRequestStr{
+            get{
+                return redirectRequestStrTemplate
+                .Replace("{redirectHost}", redirectHost)
+                .Replace("{redirectPort}", redirectPort.ToString());
+            }
+        }
+
+        public string? queryStr;
 
     }
     public class client{
-        public authServer server;
-        public authAccount account;
+        public static authServer server = new authServer();
+        public static authAccount account = new authAccount();
 
 
         static public int commandLineHandler(bool logout, string id, string pwd, string redirectHost, int redirectPort, string loginHost, int loginPort){
@@ -50,14 +65,20 @@ namespace HUSTwireless{
                 return client.logout(loginHost,loginPort);
             }else{
                 WriteLine($"[*]Going to login with:\n    Host:{loginHost}:{loginPort}\n    Redirect:{redirectHost}:{redirectPort}\n    ID:{id}");
-                string redirectRequestStr = $"GET / HTTP/1.1\r\nHost: {redirectHost}:{redirectPort}\r\n"+
-                "User-Agent: C Socket\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n"+
-                "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate\r\n"+
-                "Connection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
+
+                server.redirectHost = redirectHost;
+                server.redirectPort = redirectPort;
+                server.loginHost = loginHost;
+                server.loginPort = loginPort;
+
+                account.id = id;
+                account.password = pwd;
+                account.encrypt = false;
+
             
-                string? queryStr = infoRequest(redirectHost,redirectPort,redirectRequestStr);
-                if(queryStr != null){
-                    if(0 == login(loginHost,loginPort,queryStr,id,pwd))return 0;
+                server.queryStr = infoRequest();
+                if(account.isAvailable() ){
+                    if(0 == login())return 0;
                 }
                 return -1;
             }
@@ -120,16 +141,16 @@ namespace HUSTwireless{
             
         }
 
-        static public string? infoRequest(string ip, int port ,string requestStr){
+        static public string? infoRequest(){
             byte[] response = new byte[2048];
-            Socket? querySocket = createSocket(ip,port);
+            Socket? querySocket = createSocket(server.redirectHost,server.redirectPort);
             if(querySocket == null)return null;
             
             WriteLine("[*]requesting redirection :");
 
             try{
                 WriteLine("[*]Sending request...");
-                byte[] requestByte = Encoding.ASCII.GetBytes(requestStr);
+                byte[] requestByte = Encoding.ASCII.GetBytes(server.redirectRequestStr);
                 querySocket.Send(requestByte);
 
                 int byteReceive = querySocket.Receive(response);
@@ -158,13 +179,21 @@ namespace HUSTwireless{
 
         }
 
-        static public int login(string ip, int port, string queryStr, string id, string pwd){
+        static public int login(){
+
+            if(server.queryStr == null)return -1;
+            
+            var ip = server.loginHost;
+            var port = server.loginPort;
+            var id = account.id;
+            var pwd = account.password;
+
             byte[] response = new byte[2048];
             WriteLine("[*]Trying to login");
             Socket? loginSocket = createSocket(ip,port);
             if(loginSocket == null)return -1;
 
-            queryStr = queryStr.Replace("=","%253D").Replace("&","%2526");
+            string queryStr = server.queryStr.Replace("=","%253D").Replace("&","%2526");
 
             string content = $"userId={id}&password={pwd}&service=&queryString={queryStr}"
                 +"&operatorPwd=&operatorUserId=&validcode=&passwordEncrypt=false";
