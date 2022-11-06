@@ -27,8 +27,26 @@ namespace HUSTwireless{
         public string id{set; get;}
         public string password{set; get;}
         public bool encrypt{set; get;}
-        public TimeSpan? availableMoment{set; get;} = new TimeSpan(0,0,0);
-        public TimeSpan? availableSpan{set; get;} = new TimeSpan(24,0,0);
+        TimeSpan availableMoment = new TimeSpan(0,0,0);
+        TimeSpan availableSpan = new TimeSpan(24,0,0);
+
+        public string availableTime{
+            set{
+                TimeSpan.TryParse(availableTime, out availableMoment);
+            }
+            get{
+                return availableTime;
+            }
+        }
+        public string? Span{
+            set{
+                TimeSpan.TryParse(Span, out availableSpan);
+            }
+            get{
+                return Span;
+            }
+        }
+
 
         public bool isAvailable(){
             var time = DateTime.Now - DateTime.Today;
