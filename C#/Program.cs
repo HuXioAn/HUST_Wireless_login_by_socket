@@ -113,7 +113,8 @@ namespace HUSTwireless{
                 }
                 
             }else{
-                accounts![0].id = id;
+                accounts![0] = new authAccount();
+                accounts[0].id = id;
                 accounts[0].password = pwd;
                 accounts[0].encrypt = false;
             }
