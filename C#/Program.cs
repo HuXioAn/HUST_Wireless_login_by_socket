@@ -89,7 +89,7 @@ namespace HUSTwireless{
                         throw new Exception("Unable to find server info.");
                     }
                 }catch(Exception e){
-                    WriteLine("[!]Error parsing JSON file: {}, {}",serverConfig,e.Message);
+                    WriteLine("[!]Error parsing JSON file: {0}, {1}",serverConfig,e.Message);
                     return -1;
                 }
                 
@@ -108,7 +108,7 @@ namespace HUSTwireless{
                         throw new Exception("Unable to find account info.");
                     }
                 }catch(Exception e){
-                    WriteLine("[!]Error parsing JSON file: {}, {}",accountConfig,e.Message);
+                    WriteLine("[!]Error parsing JSON file: {0}, {1}",accountConfig,e.Message);
                     return -1;
                 }
                 
@@ -118,7 +118,18 @@ namespace HUSTwireless{
                 accounts[0].encrypt = false;
             }
 
-            return 0;
+            WriteLine($"[*]Going to login with:\n    Host:{server!.loginHost}:{server.loginPort}\n    Redirect:{server.redirectHost}:{server.redirectPort}\n ");
+            server.queryStr = infoRequest();
+
+            foreach(var account in accounts!){
+                if(account!.isAvailable()){
+                    if(0 == login(account))Environment.Exit(0);
+                    else{
+                        WriteLine($"[!]Failed to login with: {account.id}.");
+                    }
+                }
+            }
+            return -1;
             
         }
         
@@ -185,19 +196,6 @@ namespace HUSTwireless{
             );
 
             rootCommand.InvokeAsync(arg);
-
-            WriteLine($"[*]Going to login with:\n    Host:{server!.loginHost}:{server.loginPort}\n    Redirect:{server.redirectHost}:{server.redirectPort}\n ");
-            server.queryStr = infoRequest();
-
-            foreach(var account in accounts!){
-                if(account!.isAvailable()){
-                    if(0 == login(account))return 0;
-                    else{
-                        WriteLine($"[!]Failed to login with: {account.id}.");
-                    }
-                }
-            }
-            
 
             return -1;
         }
