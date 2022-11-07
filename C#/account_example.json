@@ -1,7 +1,16 @@
-{
-    "id":"U2020xxxxx",
-    "password":"xxxxxxx",
-    "encrypt":false,
-    "availableTime":"6:00",
-    "Span":"18:00"
-}
+[
+    {
+        "id":"U2020xxxxx",
+        "password":"xxxxxxx",
+        "encrypt":false,
+        "availableTime":"6:00",
+        "Span":"18:00"
+        },
+    {
+        "id":"M2021xxxxx",
+        "password":"xxxxxxx",
+        "encrypt":false,
+        "availableTime":"00:00",
+        "Span":"23:59"
+        }
+]
