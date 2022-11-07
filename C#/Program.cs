@@ -73,16 +73,14 @@ namespace HUSTwireless{
     }
     public class client{
         public static authServer? server = new authServer();
-        public static authAccount? account = new authAccount();
+        public static authAccount[]? accounts = new authAccount[1];
 
 
         static int commandLineHandlerLogin(string accountConfig, string serverConfig,
                                             string id, string pwd, string redirectHost, 
                                             int redirectPort, string loginHost, int loginPort){
             
-                                                
-            
-
+        
             if(!string.IsNullOrWhiteSpace(serverConfig)){
                 try{
                     var serverText = File.ReadAllText(serverConfig);
@@ -105,13 +103,9 @@ namespace HUSTwireless{
             if(!string.IsNullOrWhiteSpace(accountConfig)){
                 try{
                     var accountText = File.ReadAllText(accountConfig);
-                    var accounts = JsonSerializer.Deserialize<authAccount[]>(accountText)!;
+                    accounts = JsonSerializer.Deserialize<authAccount[]>(accountText)!;
                     if(accounts == null || accounts.Length < 1){
                         throw new Exception("Unable to find account info.");
-                    }else{
-                        foreach(var ac in accounts){
-                            if(ac.isAvailable())account = ac;
-                        }
                     }
                 }catch(Exception e){
                     WriteLine("[!]Error parsing JSON file: {}, {}",accountConfig,e.Message);
@@ -119,18 +113,12 @@ namespace HUSTwireless{
                 }
                 
             }else{
-                account!.id = id;
-                account.password = pwd;
-                account.encrypt = false;
+                accounts![0].id = id;
+                accounts[0].password = pwd;
+                accounts[0].encrypt = false;
             }
 
-            WriteLine($"[*]Going to login with:\n    Host:{server.loginHost}:{server.loginPort}\n    Redirect:{server.redirectHost}:{server.redirectPort}\n ");
-            server.queryStr = infoRequest();
-
-            if(account!.isAvailable() ){
-                if(0 == login())return 0;
-            }
-            return -1;
+            return 0;
             
         }
         
@@ -172,7 +160,13 @@ namespace HUSTwireless{
             loginCommand.AddOption(optionLport);
 
             logoutCommand.SetHandler(
-                (host, port)=>{logout(host,port);},
+                (host, port)=>{
+                    if(0 == logout(host,port)){
+                        Environment.Exit(0);
+                    }else{
+                        Environment.Exit(-1);
+                    }
+                    },
                 optionLhost,optionLport
             );
 
@@ -192,7 +186,20 @@ namespace HUSTwireless{
 
             rootCommand.InvokeAsync(arg);
 
-            return 0;
+            WriteLine($"[*]Going to login with:\n    Host:{server!.loginHost}:{server.loginPort}\n    Redirect:{server.redirectHost}:{server.redirectPort}\n ");
+            server.queryStr = infoRequest();
+
+            foreach(var account in accounts!){
+                if(account!.isAvailable()){
+                    if(0 == login(account))return 0;
+                    else{
+                        WriteLine($"[!]Failed to login with: {account.id}.");
+                    }
+                }
+            }
+            
+
+            return -1;
         }
 
         static  Socket? createSocket(string ip, int port){
@@ -249,7 +256,7 @@ namespace HUSTwireless{
 
         }
 
-        static  int login(){
+        static  int login(authAccount account){
 
             if(server.queryStr == null)return -1;
             
