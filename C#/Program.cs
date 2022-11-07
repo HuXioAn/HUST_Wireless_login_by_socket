@@ -84,8 +84,13 @@ namespace HUSTwireless{
             
 
             if(!string.IsNullOrWhiteSpace(serverConfig)){
-                var serverText = File.ReadAllText(serverConfig);
-                server = JsonSerializer.Deserialize<authServer>(serverText)!;
+                try{
+                    var serverText = File.ReadAllText(serverConfig);
+                    server = JsonSerializer.Deserialize<authServer>(serverText)!;
+                }catch(Exception e){
+                    WriteLine("[!]Error parsing JSON file: {}, {}",serverConfig,e.Message);
+                }
+                
             }else{
                 server.redirectHost = redirectHost;
                 server.redirectPort = redirectPort;
@@ -94,8 +99,13 @@ namespace HUSTwireless{
             }
 
             if(!string.IsNullOrWhiteSpace(accountConfig)){
-                var accountText = File.ReadAllText(accountConfig);
-                account = JsonSerializer.Deserialize<authAccount>(accountText)!;
+                try{
+                    var accountText = File.ReadAllText(accountConfig);
+                    account = JsonSerializer.Deserialize<authAccount>(accountText)!;
+                }catch(Exception e){
+                    WriteLine("[!]Error parsing JSON file: {}, {}",accountConfig,e.Message);
+                }
+                
             }else{
                 account.id = id;
                 account.password = pwd;
