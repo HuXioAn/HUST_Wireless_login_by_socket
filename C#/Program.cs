@@ -72,8 +72,8 @@ namespace HUSTwireless{
 
     }
     public class client{
-        public static authServer server = new authServer();
-        public static authAccount account = new authAccount();
+        public static authServer? server = new authServer();
+        public static authAccount? account = new authAccount();
 
 
         static int commandLineHandlerLogin(string accountConfig, string serverConfig,
@@ -86,13 +86,17 @@ namespace HUSTwireless{
             if(!string.IsNullOrWhiteSpace(serverConfig)){
                 try{
                     var serverText = File.ReadAllText(serverConfig);
-                    server = JsonSerializer.Deserialize<authServer>(serverText)!;
+                    server = JsonSerializer.Deserialize<authServer>(serverText);
+                    if(server == null){
+                        throw new Exception("Unable to find server info.");
+                    }
                 }catch(Exception e){
                     WriteLine("[!]Error parsing JSON file: {}, {}",serverConfig,e.Message);
+                    return -1;
                 }
                 
             }else{
-                server.redirectHost = redirectHost;
+                server!.redirectHost = redirectHost;
                 server.redirectPort = redirectPort;
                 server.loginHost = loginHost;
                 server.loginPort = loginPort;
@@ -101,13 +105,21 @@ namespace HUSTwireless{
             if(!string.IsNullOrWhiteSpace(accountConfig)){
                 try{
                     var accountText = File.ReadAllText(accountConfig);
-                    account = JsonSerializer.Deserialize<authAccount>(accountText)!;
+                    var accounts = JsonSerializer.Deserialize<authAccount[]>(accountText)!;
+                    if(accounts == null || accounts.Length < 1){
+                        throw new Exception("Unable to find account info.");
+                    }else{
+                        foreach(var ac in accounts){
+                            if(ac.isAvailable())account = ac;
+                        }
+                    }
                 }catch(Exception e){
                     WriteLine("[!]Error parsing JSON file: {}, {}",accountConfig,e.Message);
+                    return -1;
                 }
                 
             }else{
-                account.id = id;
+                account!.id = id;
                 account.password = pwd;
                 account.encrypt = false;
             }
@@ -115,7 +127,7 @@ namespace HUSTwireless{
             WriteLine($"[*]Going to login with:\n    Host:{server.loginHost}:{server.loginPort}\n    Redirect:{server.redirectHost}:{server.redirectPort}\n ");
             server.queryStr = infoRequest();
 
-            if(account.isAvailable() ){
+            if(account!.isAvailable() ){
                 if(0 == login())return 0;
             }
             return -1;
