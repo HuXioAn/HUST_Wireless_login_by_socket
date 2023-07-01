@@ -85,6 +85,31 @@ namespace HUSTwireless{
 
         public string? queryStr;
 
+        public string? getMacFromQuery(){
+
+            if(queryStr == null){
+                return null;
+            }else{
+
+                WriteLine("[*]MAC extraction QueryStr:"+queryStr);
+
+                //mac提取
+                string mac = queryStr.Substring(queryStr.IndexOf("mac%253D")+8);
+                mac = queryStr.Remove(queryStr.IndexOf("%2526t%253D"));
+
+
+                WriteLine("[*]MAC extraction result:"+mac);
+
+
+                return mac;
+
+
+                
+            }
+
+            return null;
+        }
+
     }
     public class client{
         public static authServer? server = new authServer();
@@ -278,6 +303,17 @@ namespace HUSTwireless{
             var port = server.loginPort;
             var id = account.id;
             var pwd = account.password;
+
+            var mac = server.getMacFromQuery();
+
+            if(mac == null){WriteLine($"[*]Error logining: Unable to extract mac from queryStr"); return -1;}
+
+            string passwordMac = pwd + ">" + mac;
+            var passwordMacRev = new string(passwordMac.ToCharArray().Reverse<char>().toArray<char>());
+
+            //RSA加密
+
+
 
             byte[] response = new byte[2048];
             WriteLine("[*]Trying to login");
