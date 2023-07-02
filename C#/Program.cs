@@ -94,16 +94,17 @@ namespace HUSTwireless{
                 WriteLine("[*]MAC extraction QueryStr:"+queryStr);
 
                 //mac提取
-                string mac = queryStr.Substring(queryStr.IndexOf("mac%253D")+8);
-                mac = queryStr.Remove(queryStr.IndexOf("%2526t%253D"));
+                if(queryStr.IndexOf("mac=")>0){
+                    string mac = queryStr.Substring(queryStr.IndexOf("mac=")+4);
+                    mac = mac.Remove(mac.IndexOf("&"));
+                    //WriteLine("[*]MAC extraction result:"+mac);
+                    return mac;
 
-
-                WriteLine("[*]MAC extraction result:"+mac);
-
-
-                return mac;
-
-
+                }else{
+                    return null;
+                }
+                
+                
                 
             }
 
@@ -309,7 +310,7 @@ namespace HUSTwireless{
             if(mac == null){WriteLine($"[*]Error logining: Unable to extract mac from queryStr"); return -1;}
 
             string passwordMac = pwd + ">" + mac;
-            var passwordMacRev = new string(passwordMac.ToCharArray().Reverse<char>().toArray<char>());
+            var passwordMacRev = new string(passwordMac.ToCharArray().Reverse<char>().ToArray<char>());
 
             //RSA加密
 
